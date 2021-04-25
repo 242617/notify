@@ -1,4 +1,4 @@
-SERVICE_NAME ?= 242617/notify:0.0.8
+SERVICE_NAME ?= 242617/notify:0.0.10
 
 # Debug
 .PHONY: proto
