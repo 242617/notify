@@ -7,8 +7,6 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/hashicorp/consul/api"
-	"github.com/hashicorp/consul/connect"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"gopkg.in/yaml.v2"
@@ -23,10 +21,7 @@ const (
 	ServiceName = "notify"
 )
 
-var (
-	serverAddress string
-	consulAddress string
-)
+var serverAddress string
 
 func init() {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
@@ -38,35 +33,16 @@ func init() {
 
 func main() {
 	flag.StringVar(&serverAddress, "address", "0.0.0.0:8080", "Server address")
-	flag.StringVar(&consulAddress, "consul", "0.0.0.0:8500", "Consul address")
 	flag.Parse()
 
-	if os.Getenv("CONSUL_HTTP_TOKEN") == "" {
-		log.Fatal().Msg("empty token")
-	}
-
-	client, err := api.NewClient(&api.Config{Address: consulAddress})
+	b, err := os.ReadFile("/etc/service/config.yaml")
 	if err != nil {
-		log.Fatal().Err(err).Msg("cannot create client")
-	}
-
-	service, err := connect.NewService(ServiceName, client)
-	if err != nil {
-		log.Fatal().Err(err).Msg("cannot create new service")
-	}
-	defer service.Close()
-
-	<-service.ReadyWait()
-
-	log.Info().Str("service", ServiceName).Msg("start")
-
-	pair, _, err := client.KV().Get(ServiceName, nil)
-	if err != nil {
-		log.Fatal().Err(err).Msg("cannot get kv")
+		log.Debug().Err(err).Msg("cannot open configuration file")
+		select {}
 	}
 
 	var cfg config.Config
-	if err := yaml.Unmarshal(pair.Value, &cfg); err != nil {
+	if err := yaml.Unmarshal(b, &cfg); err != nil {
 		log.Fatal().Err(err).Msg("cannot unmarshal config")
 	}
 
@@ -79,8 +55,6 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("cannot create server")
 	}
-
-	//
 
 	telegram.Start(context.TODO())
 	go func() {

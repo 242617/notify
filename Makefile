@@ -1,4 +1,4 @@
-SERVICE_NAME ?= 242617/notify:0.0.10
+SERVICE_NAME ?= 242617/notify
 
 # Debug
 .PHONY: proto
@@ -22,10 +22,8 @@ build:
 
 .PHONY: run
 run: build
-	CONSUL_HTTP_TOKEN="" \
-		./bin/app \
-			--address=localhost:8080 \
-			--consul=engine:8080
+	./bin/app \
+		--address=localhost:8080
 
 
 # Docker
